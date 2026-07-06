@@ -34,7 +34,7 @@ const Feed = () => {
           <h1>Recent messages</h1>
       </div>
     </div>
-  ): <loading/>
+  ): <Loading/>
 }
 
 export default Feed
