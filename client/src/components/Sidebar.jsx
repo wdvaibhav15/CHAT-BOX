@@ -12,8 +12,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
   return (
     <div
-      className={`w-60 xl:w-72 h-screen bg-white border-r border-gray-200 flex flex-col max-sm:absolute top-0 bottom-0 z-20
-      ${sidebarOpen ? "translate-x-0" : "max-sm:-translate-x-full"} transition-all duration-300 ease-in-out`}
+      className={`fixed top-0 left-0 w-60 xl:w-72 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-transform duration-300 ease-in-out
+      ${sidebarOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"}`}
     >
       <div className="flex-1 w-full">
         <img
@@ -29,6 +29,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
         <Link
           to="/create-post"
+          onClick={() => setSidebarOpen(false)}
           className="flex items-center justify-center gap-2 py-2.5 mt-6 mx-6 rounded-lg bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-700 hover:to-purple-800 active:scale-95 transition text-white cursor-pointer"
         >
           <CirclePlus className="w-5 h-5" />
