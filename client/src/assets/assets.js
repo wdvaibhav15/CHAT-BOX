@@ -236,8 +236,8 @@ export const dummyMessagesData = [
         "text": "",
         "message_type": "image",
         "media_url": "https://images.pexels.com/photos/106341/pexels-photo-106341.jpeg",
-        "createdAt": "2025-07-17T10:10:58.524Z",
-        "updatedAt": "2025-07-25T10:43:50.346Z",
+        "createdAt": new Date(Date.now() - 2 * 60 * 60 * 1000),
+        "updatedAt": new Date(Date.now() - 2 * 60 * 60 * 1000),
         "seen": true
     },
     {
@@ -247,8 +247,8 @@ export const dummyMessagesData = [
         "text": "This is a Samsung Tablet",
         "message_type": "text",
         "media_url": "",
-        "createdAt": "2025-07-17T10:11:08.437Z",
-        "updatedAt": "2025-07-25T10:43:50.346Z",
+        "createdAt": new Date(Date.now() - 4 * 60 * 60 * 1000),
+        "updatedAt": new Date(Date.now() - 4 * 60 * 60 * 1000),
         "seen": true
     },
     {
@@ -259,8 +259,8 @@ export const dummyMessagesData = [
         "message_type": "text",
         "media_url": "",
         "seen": false,
-        "createdAt": "2025-07-25T10:44:12.753Z",
-        "updatedAt": "2025-07-25T10:44:12.753Z",
+        "createdAt": new Date(Date.now() - 1 * 60 * 60 * 1000),
+        "updatedAt": new Date(Date.now() - 1 * 60 * 60 * 1000),
     },
         {
         "_id": "6878cc2817a54e4d3748010c",
@@ -269,8 +269,8 @@ export const dummyMessagesData = [
         "text": "you can purchase it from amazon",
         "message_type": "text",
         "media_url": "",
-        "createdAt": "2025-08-17T10:10:48.956Z",
-        "updatedAt": "2025-08-25T10:43:50.346Z",
+        "createdAt": new Date(Date.now() - 3 * 60 * 60 * 1000),
+        "updatedAt": new Date(Date.now() - 3 * 60 * 60 * 1000),
         "seen": true
     },
 ]
