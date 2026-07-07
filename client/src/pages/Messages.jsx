@@ -8,7 +8,7 @@ const Messages = () => {
   const naviagete = useNavigate();
 
   return (
-    <div className="min-h-screen ml-70 relative bg-slate-50">
+    <div className="min-h-screen ml-80 relative bg-slate-50">
       <div className="max-w-6xl mx-auto p-6">
           {/* Title */}
           <div className="mb-8">

@@ -21,7 +21,7 @@ const Connections = () => {
 ]
 
   return (
-    <div className="mb-8 ml-70">
+    <div className="mb-8 ml-80 ">
       <div className="max-w-6xl mx-auto p-6">
           {/* Title */}
           <div className="mb-8">

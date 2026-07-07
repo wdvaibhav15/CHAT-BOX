@@ -12,10 +12,9 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
   return (
     <div
-      className={`fixed top-0 left-0 w-60 xl:w-72 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-transform duration-300 ease-in-out
-      ${sidebarOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"}`}
+      className={`fixed w-60 xl:w-72 bg-white border-r border-gray-200 flex flex-col justify-between items-center max-sm:absolute top-0 bottom-0 z-20 ${sidebarOpen ? "translate-x-0" : "max-sm:-translate-x-full"} transition-all duration-300 ease-in-out`}
     >
-      <div className="flex-1 w-full">
+      <div className="w-full ">
         <img
           onClick={() => navigate("/")}
           src={assets.logo}
