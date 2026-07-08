@@ -1,56 +1,74 @@
-import React,{ useState} from 'react'
+import React, { useState } from 'react'
 import { dummyConnectionsData } from '../assets/assets'
 import { Search } from 'lucide-react'
 import UserCard from '../components/UserCard'
 import Loading from '../components/Loading'
 
 const Discover = () => {
-
   const [input, setInput] = useState('')
   const [users, setUsers] = useState(dummyConnectionsData)
   const [loading, setLoading] = useState(false) 
 
-  const handleSearch = async (e)=>{
-    if(e.key === 'Enter'){
+  const handleSearch = async (e) => {
+    if (e.key === 'Enter') {
       setUsers([])
       setLoading(true)
       setTimeout(() => {
-        setUsers(dummyConnectionsData)
+        const filtered = dummyConnectionsData.filter(user => 
+          user.full_name.toLowerCase().includes(input.toLowerCase()) ||
+          user.username.toLowerCase().includes(input.toLowerCase()) ||
+          user.bio?.toLowerCase().includes(input.toLowerCase())
+        )
+        setUsers(filtered)
         setLoading(false)
-      })
+      }, 400)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white ml-80">
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Title */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Discover People</h1>
-          <p className="text-slate-600">Find new people and connections.</p>
+    // Uses normal layout on desktop, but centers everything natively on mobile screen views
+    <div className="min-h-screen md:ml-80 bg-gradient-to-b from-slate-50 to-white overflow-x-hidden flex flex-col max-sm:items-center">
+      <div className="w-full max-w-6xl px-4 sm:px-8 py-20 sm:py-10 flex flex-col max-sm:items-center">
+        
+        {/* Title - Centered on mobile only via max-sm:text-center */}
+        <div className="mb-8 max-sm:text-center w-full">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">Discover People</h1>
+          <p className="text-sm text-slate-600">Find new people and connections.</p>
         </div>
-        {/* Search bar */}
-        <div className="mb-8 shadow-md rounded-md border border-slate-200/60 bg-white/80">
-            <div className="p-6">
-              <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                  <input
-                  onKeyUp={handleSearch}
-                  value={input}
-                  onChange={(e)=>setInput(e.target.value)}
-                  type="text"
-                  placeholder="Search people by name, username, bio or location..." className="pl-10 sm:pl-12 py-2 w-full border border-gray-300 rounded-md max-sm:text-sm" />
-              </div>
-            </div>
+
+        {/* Search bar Container */}
+        <div className="w-full mb-8 shadow-sm rounded-xl border border-slate-200/60 bg-white p-4 sm:p-6 max-w-xl sm:max-w-none">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <input
+              onKeyUp={handleSearch}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              type="text"
+              placeholder="Search people by name, username, bio or location..." 
+              className="pl-12 pr-4 py-3 w-full border border-gray-200 rounded-xl max-sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all bg-slate-50/50" 
+            />
+          </div>
         </div>
-        <div className="flex flex-wrap gap-5">
-            {users.map((user)=>(
+
+        {/* Main Content Feed Area */}
+        {loading ? (
+          <div className="flex items-center justify-center w-full min-h-[50vh]">
+            <Loading height="100px" />
+          </div>
+        ) : users.length === 0 ? (
+          <div className="text-center py-12 text-slate-500">
+            No people found matching your search.
+          </div>
+        ) : (
+          /* Grid centers items on small devices using max-sm:justify-items-center */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-sm:justify-items-center">
+            {users.map((user) => (
               <UserCard key={user._id} user={user} />
             ))}
-            {
-              loading && (<Loading height="60vh" />)
-            }
-        </div>
+          </div>
+        )}
+
       </div>
     </div>
   )
