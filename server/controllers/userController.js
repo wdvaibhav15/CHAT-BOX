@@ -1,12 +1,13 @@
+import Connection from "../models/connection.js"
 import User from "../models/user.js"
 import fs from "fs"
 import imagekit from "../configs/imageKit.js"
 
-// get user fata using userId
-export const grtUserData = async(req,res) => {
+// get user data using userId
+export const getUserData = async(req, res) => {
     try {
-        const {usrerId} = req.auth();
-        const user = await User.findById(usrerId)
+        const { userId } = req.auth();
+        const user = await User.findById(userId)
         if(!user){
             return res.status(401).json({success: false, message: "User Not Found"});
         }
@@ -14,84 +15,86 @@ export const grtUserData = async(req,res) => {
     } catch (error) {
         res.json({success: false, message: error.message})
     }
- }
+}
 
 // update the user data 
-export const updateUserData = async(req,res) => {
+export const updateUserData = async(req, res) => {
     try {
-        const {usrerId} = req.auth();
-        const { username, bio, location, full_name } = req.body; // {username, bio, location full_name}
-        const tempUser = await User.findById(usrerId)
+        const { userId } = req.auth();
+        let { username, bio, location, full_name } = req.body; 
+        const tempUser = await User.findById(userId)
+
+        if (!tempUser) {
+            return res.status(404).json({ success: false, message: "User Not Found" });
+        }
 
         !username && (username = tempUser.username);
 
         if(tempUser.username !== username){
-            const user = User.findOne({username})
+            const user = await User.findOne({username})
             if(user){
-                username = tempUser.username
                 return res.status(401).json({success: false, message: "Username already taken"});
             }
         }
-        const updateData = {
+        
+        const updatedData = {
             username,
             bio,
             location,
             full_name
         }
 
-        const profile = req.files.profile && req.files.profile[0];
-        const cover = req.files.cover && req.files.cover[0];
+        const profile = req.files?.profile && req.files.profile[0];
+        const cover = req.files?.cover && req.files.cover[0];
         
         if(profile){
             const buffer = fs.readFileSync(profile.path)
             const response = await imagekit.upload({
-                file:buffer,
+                file: buffer,
                 fileName: profile.originalname,
             })
 
             const url = imagekit.url({
-
                 path: response.filePath,
                 transformation: [
                     { quality: "auto" },
-                    { formate: "webp" },
+                    { format: "webp" },
                     { width : "512"}
                 ]
             })
             updatedData.profile_picture = url
         }
 
-        
-        // for cover progile picture
+        // for cover profile picture
         if(cover){
             const buffer = fs.readFileSync(cover.path)
             const response = await imagekit.upload({
-                file:buffer,
-                fileName: profile.originalname,
+                file: buffer,
+                fileName: cover.originalname, // Fixed: point to cover object
             })
 
             const url = imagekit.url({
-
                 path: response.filePath,
                 transformation: [
                     { quality: "auto" },
-                    { formate: "webp" },
+                    { format: "webp" }, // Fixed: spelling from formate to format
                     { width : "1280"}
                 ]
             })
-            updatedData.cover_picture = url
+            updatedData.cover_photo = url
         }
 
-        const user = await User.findByIdAndUpdate(usrerId, updateData, {new: true});
+        // Fixed: accurately targets userId and updatedData
+        const user = await User.findByIdAndUpdate(userId, updatedData, {new: true});
         res.json({success: true, user, message: "Profile Updated Successfully"})
 
     } catch (error) {
         res.json({success: false, message: error.message})
     }
- }
+}
 
-//  find users using username , email, location, and name
-export const discoverUsers = async(req,res) => {
+// find users using username , email, location, and name
+export const discoverUsers = async(req, res) => {
     try {
         const { userId } = req.auth();
         const { input } = req.body;
@@ -105,19 +108,19 @@ export const discoverUsers = async(req,res) => {
                 ]
             }
         )
-        const filteredUsers = allUsers.filter(user=> user._id !== userId);
+        const filteredUsers = allUsers.filter(user => user._id.toString() !== userId);
         res.json({success: true, users: filteredUsers})
     } catch (error) {
         res.json({success: false, message: error.message})
     }
- }
+}
 
- // follow an user 
- export const followUser = async(req,res) => {
+// follow an user 
+export const followUser = async(req, res) => {
     try {
         const { userId } = req.auth();
         const { id } = req.body;
-         
+          
         const user = await User.findById(userId);
         if(user.following.includes(id)){
             return res.json({success: false, message: "You are already following this user"});
@@ -125,7 +128,7 @@ export const discoverUsers = async(req,res) => {
         user.following.push(id);
         await user.save();
 
-        const toUser = await user.findById(id);
+        const toUser = await User.findById(id);
         toUser.followers.push(userId);
         await toUser.save();
 
@@ -134,24 +137,118 @@ export const discoverUsers = async(req,res) => {
     } catch (error) {
         res.json({success: false, message: error.message})
     }
- }
+}
 
- // unfollow an user 
- export const unfollowUser = async(req,res) => {
+// unfollow an user 
+export const unfollowUser = async(req, res) => {
     try {
         const { userId } = req.auth();
         const { id } = req.body;
-         
+          
         const user = await User.findById(userId);
-        user.following = user.following.filter(user => user !== id);
+        user.following = user.following.filter(uid => uid.toString() !== id);
         await user.save();
 
         const toUser = await User.findById(id);
-        toUser.followers = toUser.followers.filter(user => user !== userId);
+        toUser.followers = toUser.followers.filter(uid => uid.toString() !== userId);
         await toUser.save();
 
         res.json({success: true, message: "User unfollowed successfully"})
     } catch (error) {
+        res.json({success: false, message: error.message})
+    }
+}
+
+
+// send connection request
+export const sendConnectionRequest = async (req, res)=>{
+    try {
+        const { userId } = req.auth();
+        const { id } = req.body;
+
+        // check if user has sent more than 20  connection requests in the lasta 23 hours 
+        const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const connectionRequests = await Connection.find({from_user_id: userId, createdAt: {$gte: last24Hours}});
+        if(connectionRequests.length >= 20){
+            return res.json({success: false, message: "You have sent too many connection requests in the last 24 hours"});
+        }
+        // check if users are already connected or not
+        const connection = await Connection.findOne({
+           $or:  [
+            {form_user_id: userId, to_user_id: id},
+            {form_user_id: id, to_user_id: userId},
+            ]
+        });
+
+        if(!connection){
+            await Connection.create({
+                form_user_id: userId,
+                to_user_id: id
+            })
+            return res.json({success: true, message: "Connection request sent successfully"})
+        }else if (connection && connection.status === "accepted"){
+            return res.json({success: false, message: "You are already connected with this user"});
+        }
+        return res.json({success: false, message: "connection request is pending"});
+        
+
+    } catch (error) {
+        console.log(error);
+        res.json({success: false, message: error.message})
+    }
+}
+
+// get user connection
+export const getUserConnections = async(req, res) => {
+    try {
+        const { userId } = req.auth();
+        const user = await User.findById(userId).populate( "connections followers following")
+
+        const connections = user.connections;
+        const followers = user.followers;
+        const following = user.following;
+
+        const pendingConnections = (await Connections.find({
+            to_user_id: userId,
+            status: "pending"
+        }).populate("from_user_id")).map(connection => connection.from_user_id);
+
+        res.json({success: true, connections, followers, following, pendingConnections})
+
+       } catch (error) {
+        console.log(error);
+        res.json({success: false, message: error.message})
+    }
+}
+
+// Accept connection Requests
+export const acceptConnectionRequest = async(req, res) => {
+    try {
+        const { userId } = req.auth();
+        const { id } = req.body;
+        const connection = await Connection.findOne({
+            from_user_id: id,
+            to_user_id: userId
+        })
+        if(!connection){
+            return res.json({success: false, message: "Connection not found"});
+        }
+
+        const user = await User.findById(userId);
+        user.connectionRequests.push(id);
+        await user.save()
+
+        const toUser = await User.findById(id);
+        toUser.connections.push(userId);
+        await toUser.save()
+
+        connection.status = "accepted";
+        await connection.save();
+
+        res.json({ success: true, message: "Connection accepted successfully" });
+        
+    } catch (error) {
+        console.log(error);
         res.json({success: false, message: error.message})
     }
 }
