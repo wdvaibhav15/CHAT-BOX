@@ -18,80 +18,184 @@ export const getUserData = async(req, res) => {
 }
 
 // update the user data 
-export const updateUserData = async(req, res) => {
-    try {
-        const { userId } = req.auth();
-        let { username, bio, location, full_name } = req.body; 
-        const tempUser = await User.findById(userId)
+// export const updateUserData = async(req, res) => {
+//     try {
+//         const { userId } = req.auth();
+//         let { username, bio, location, full_name } = req.body; 
+//         const tempUser = await User.findById(userId)
 
-        if (!tempUser) {
-            return res.status(404).json({ success: false, message: "User Not Found" });
-        }
+//         if (!tempUser) {
+//             return res.status(404).json({ success: false, message: "User Not Found" });
+//         }
 
-        !username && (username = tempUser.username);
+//         !username && (username = tempUser.username);
 
-        if(tempUser.username !== username){
-            const user = await User.findOne({username})
-            if(user){
-                return res.status(401).json({success: false, message: "Username already taken"});
-            }
-        }
+//         if(tempUser.username !== username){
+//             const user = await User.findOne({username})
+//             if(user){
+//                 return res.status(401).json({success: false, message: "Username already taken"});
+//             }
+//         }
         
-        const updatedData = {
-            username,
-            bio,
-            location,
-            full_name
-        }
+//         const updatedData = {
+//             username,
+//             bio,
+//             location,
+//             full_name
+//         }
 
-        const profile = req.files?.profile && req.files.profile[0];
-        const cover = req.files?.cover && req.files.cover[0];
+//         const profile = req.files?.profile && req.files.profile[0];
+//         const cover = req.files?.cover && req.files.cover[0];
         
-        if(profile){
-            const buffer = fs.readFileSync(profile.path)
-            const response = await imagekit.upload({
-                file: buffer,
-                fileName: profile.originalname,
-            })
+//         if(profile){
+//             const buffer = fs.readFileSync(profile.path)
+//             const response = await imagekit.upload({
+//                 file: buffer,
+//                 fileName: profile.originalname,
+//             })
 
-            const url = imagekit.url({
-                path: response.filePath,
-                transformation: [
-                    { quality: "auto" },
-                    { format: "webp" },
-                    { width : "512"}
-                ]
-            })
-            updatedData.profile_picture = url
-        }
+//             const url = imagekit.url({
+//                 path: response.filePath,
+//                 transformation: [
+//                     { quality: "auto" },
+//                     { format: "webp" },
+//                     { width : "512"}
+//                 ]
+//             })
+//             updatedData.profile_picture = url
+//         }
 
-        // for cover profile picture
-        if(cover){
-            const buffer = fs.readFileSync(cover.path)
-            const response = await imagekit.upload({
-                file: buffer,
-                fileName: cover.originalname, // Fixed: point to cover object
-            })
+//         // for cover profile picture
+//         if(cover){
+//             const buffer = fs.readFileSync(cover.path)
+//             const response = await imagekit.upload({
+//                 file: buffer,
+//                 fileName: cover.originalname, // Fixed: point to cover object
+//             })
 
-            const url = imagekit.url({
-                path: response.filePath,
-                transformation: [
-                    { quality: "auto" },
-                    { format: "webp" }, // Fixed: spelling from formate to format
-                    { width : "1280"}
-                ]
-            })
-            updatedData.cover_photo = url
-        }
+//             const url = imagekit.url({
+//                 path: response.filePath,
+//                 transformation: [
+//                     { quality: "auto" },
+//                     { format: "webp" }, // Fixed: spelling from formate to format
+//                     { width : "1280"}
+//                 ]
+//             })
+//             updatedData.cover_photo = url
+//         }
 
-        // Fixed: accurately targets userId and updatedData
-        const user = await User.findByIdAndUpdate(userId, updatedData, {new: true});
-        res.json({success: true, user, message: "Profile Updated Successfully"})
+//         // Fixed: accurately targets userId and updatedData
+//         const user = await User.findByIdAndUpdate(userId, updatedData, {new: true});
+//         res.json({success: true, user, message: "Profile Updated Successfully"})
 
-    } catch (error) {
-        res.json({success: false, message: error.message})
+//     } catch (error) {
+//         res.json({success: false, message: error.message})
+//     }
+// }
+export const updateUserData = async (req, res) => {
+  try {
+    const { userId } = req.auth();
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
     }
-}
+
+    let { username, bio, location, full_name } = req.body;
+
+    const tempUser = await User.findById(userId);
+
+    if (!tempUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User Not Found",
+      });
+    }
+
+    username = username?.trim() || tempUser.username;
+
+    if (tempUser.username !== username) {
+      const existingUser = await User.findOne({ username });
+
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          message: "Username already taken",
+        });
+      }
+    }
+
+    const updatedData = {
+      username,
+      bio: bio ?? tempUser.bio,
+      location: location ?? tempUser.location,
+      full_name: full_name ?? tempUser.full_name,
+    };
+
+    const profile = req.files?.profile?.[0];
+    const cover = req.files?.cover?.[0];
+
+    if (profile) {
+      const response = await imagekit.upload({
+        file: profile.buffer.toString("base64"),
+        fileName: profile.originalname,
+        folder: "/chat-box/profile",
+        useUniqueFileName: true,
+      });
+
+      const profileUrl = imagekit.url({
+        path: response.filePath,
+        transformation: [
+          { quality: "auto" },
+          { format: "webp" },
+          { width: "512" },
+        ],
+      });
+
+      updatedData.profile_picture = profileUrl;
+    }
+
+    if (cover) {
+      const response = await imagekit.upload({
+        file: cover.buffer.toString("base64"),
+        fileName: cover.originalname,
+        folder: "/chat-box/cover",
+        useUniqueFileName: true,
+      });
+
+      const coverUrl = imagekit.url({
+        path: response.filePath,
+        transformation: [
+          { quality: "auto" },
+          { format: "webp" },
+          { width: "1280" },
+        ],
+      });
+
+      updatedData.cover_photo = coverUrl;
+    }
+
+    const user = await User.findByIdAndUpdate(userId, updatedData, {
+      new: true,
+      runValidators: true,
+    });
+
+    return res.status(200).json({
+      success: true,
+      user,
+      message: "Profile Updated Successfully",
+    });
+  } catch (error) {
+    console.error("Update user error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update profile",
+    });
+  }
+};
 
 // find users using username , email, location, and name
 export const discoverUsers = async(req, res) => {
