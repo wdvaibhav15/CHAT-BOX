@@ -11,20 +11,19 @@ import {
     getUserProfiles} from "../controllers/userController.js";
 import { protect } from "../middlewares/auth.js";
 import { upload } from "../configs/multer.js";
+import { getUserRecentMessages } from "../controllers/messageController.js";
 
-const userRoutes = express.Router();
+const userRouter = express.Router();
 
-userRoutes.get("/data", protect, getUserData)
-userRoutes.post("/update", upload.fields([{name: "profile", maxCount: 1}, {name: "cover", maxCount: 1}]), protect, updateUserData)
+userRouter.get("/data", protect, getUserData)
+userRouter.post("/update", upload.fields([{name: "profile", maxCount: 1}, {name: "cover", maxCount: 1}]), protect, updateUserData)
+userRouter.post("/discover", protect, discoverUsers)
+userRouter.post("/follow", protect, followUser)
+userRouter.post("/unfollow", protect, unfollowUser)
+userRouter.post("/connect", protect, sendConnectionRequest)
+userRouter.post("/accept", protect, acceptConnectionRequest)
+userRouter.get("/connections", protect, getUserConnections)
+userRouter.post("/profiles", getUserProfiles)
+userRouter.get("/recent-messages", protect, getUserRecentMessages)
 
-userRoutes.post("/discover", protect, discoverUsers)
-userRoutes.post("/follow", protect, followUser)
-userRoutes.post("/unfollow", protect, unfollowUser)
-
-userRoutes.post("/connect", protect, sendConnectionRequest)
-userRoutes.post("/accept", protect, acceptConnectionRequest)
-userRoutes.get("/connections", protect, getUserConnections)
-
- userRoutes.post("/profiles", getUserProfiles)
-
-export default userRoutes
+export default userRouter
