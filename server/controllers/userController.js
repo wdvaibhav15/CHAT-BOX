@@ -2,6 +2,7 @@ import Connection from "../models/connection.js"
 import User from "../models/user.js"
 import fs from "fs"
 import imagekit from "../configs/imageKit.js"
+import Post from "../models/post.js"
 
 // get user data using userId
 export const getUserData = async(req, res) => {
@@ -18,80 +19,7 @@ export const getUserData = async(req, res) => {
 }
 
 // update the user data 
-// export const updateUserData = async(req, res) => {
-//     try {
-//         const { userId } = req.auth();
-//         let { username, bio, location, full_name } = req.body; 
-//         const tempUser = await User.findById(userId)
 
-//         if (!tempUser) {
-//             return res.status(404).json({ success: false, message: "User Not Found" });
-//         }
-
-//         !username && (username = tempUser.username);
-
-//         if(tempUser.username !== username){
-//             const user = await User.findOne({username})
-//             if(user){
-//                 return res.status(401).json({success: false, message: "Username already taken"});
-//             }
-//         }
-        
-//         const updatedData = {
-//             username,
-//             bio,
-//             location,
-//             full_name
-//         }
-
-//         const profile = req.files?.profile && req.files.profile[0];
-//         const cover = req.files?.cover && req.files.cover[0];
-        
-//         if(profile){
-//             const buffer = fs.readFileSync(profile.path)
-//             const response = await imagekit.upload({
-//                 file: buffer,
-//                 fileName: profile.originalname,
-//             })
-
-//             const url = imagekit.url({
-//                 path: response.filePath,
-//                 transformation: [
-//                     { quality: "auto" },
-//                     { format: "webp" },
-//                     { width : "512"}
-//                 ]
-//             })
-//             updatedData.profile_picture = url
-//         }
-
-//         // for cover profile picture
-//         if(cover){
-//             const buffer = fs.readFileSync(cover.path)
-//             const response = await imagekit.upload({
-//                 file: buffer,
-//                 fileName: cover.originalname, // Fixed: point to cover object
-//             })
-
-//             const url = imagekit.url({
-//                 path: response.filePath,
-//                 transformation: [
-//                     { quality: "auto" },
-//                     { format: "webp" }, // Fixed: spelling from formate to format
-//                     { width : "1280"}
-//                 ]
-//             })
-//             updatedData.cover_photo = url
-//         }
-
-//         // Fixed: accurately targets userId and updatedData
-//         const user = await User.findByIdAndUpdate(userId, updatedData, {new: true});
-//         res.json({success: true, user, message: "Profile Updated Successfully"})
-
-//     } catch (error) {
-//         res.json({success: false, message: error.message})
-//     }
-// }
 export const updateUserData = async (req, res) => {
   try {
     const { userId } = req.auth();
@@ -285,10 +213,19 @@ export const sendConnectionRequest = async (req, res)=>{
         });
 
         if(!connection){
-            await Connection.create({
+            const newConnection = await Connection.create({
                 form_user_id: userId,
                 to_user_id: id
             })
+
+            await inngest.send({
+                name: "app/connection-request",
+                data: {
+                    connectionId: newConnection._id
+                }
+            })
+
+
             return res.json({success: true, message: "Connection request sent successfully"})
         }else if (connection && connection.status === "accepted"){
             return res.json({success: false, message: "You are already connected with this user"});
@@ -350,6 +287,22 @@ export const acceptConnectionRequest = async(req, res) => {
         await connection.save();
 
         res.json({ success: true, message: "Connection accepted successfully" });
+        
+    } catch (error) {
+        console.log(error);
+        res.json({success: false, message: error.message})
+    }
+}
+// get user profiles
+export const getUserProfiles = async(req, res) => {
+    try {
+        const { profileId } = req.body;
+        const profile = await User.findById(profileId)
+        if(!profile){
+            return res.json({success: false, message: "Profile not found"});
+        }
+        const posts = await Post.find({user: profileId}).populate("user");
+        res.json({success: true, profile, posts})
         
     } catch (error) {
         console.log(error);

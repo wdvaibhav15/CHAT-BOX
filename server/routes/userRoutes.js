@@ -7,7 +7,8 @@ import {
     unfollowUser, 
     sendConnectionRequest, 
     acceptConnectionRequest, 
-    getUserConnections} from "../controllers/userController.js";
+    getUserConnections,
+    getUserProfiles} from "../controllers/userController.js";
 import { protect } from "../middlewares/auth.js";
 import { upload } from "../configs/multer.js";
 
@@ -23,5 +24,7 @@ userRoutes.post("/unfollow", protect, unfollowUser)
 userRoutes.post("/connect", protect, sendConnectionRequest)
 userRoutes.post("/accept", protect, acceptConnectionRequest)
 userRoutes.get("/connections", protect, getUserConnections)
+
+ userRoutes.post("/profiles", getUserProfiles)
 
 export default userRoutes

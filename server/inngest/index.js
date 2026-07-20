@@ -2,6 +2,7 @@ import Connection from "../models/connection.js";
 import { Inngest } from "inngest";
 import User from "../models/user.js";
 import sendEmail from "../configs/nodeMailer.js";
+import Story from "../models/story.js";
 
 export const inngest = new Inngest({ id: "Chat-Box-app" });
 
@@ -133,12 +134,29 @@ const sendNewConnectionRequestReminder = inngest.createFunction(
     }
 );
 
+// inngest duntion to delete story after 24 hours
+const deleteStory = inngest.createFunction(
+    { 
+      id: "story-delete" ,
+      event: "app/story-delete" },
+    async ({ event, step }) => {
+      const { storyId } = event.data;
+      const in24Hours = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await step.sleepUntil("wait-for-24-hours", in24Hours);
+      await step.run("delete-story", async () => {
+        await Story.findByIdAndDelete(storyId);
+        return { message: "Story deleted" };
+      });
+    }
+  )
 
 
+// Create an enpty array where we will export future inngest functions
 export const functions = [
   syncUserCreation,
   syncUserUpdation,
   syncUserDeletion,
-  sendNewConnectionRequestReminder 
+  sendNewConnectionRequestReminder,
+  deleteStory 
 
 ];
