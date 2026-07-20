@@ -1,9 +1,15 @@
 import React, {useState} from 'react'
 import { dummyUserData } from '../assets/assets';
 import { Pencil } from 'lucide-react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateUser } from '../features/user/userSlice.js';
+import { useAuth } from '@clerk/clerk-react';
+import toast from 'react-hot-toast';
 
 const ProfileModel = ({setShowEdit}) => {
+
+    const dispatch = useDispatch();
+    const {getToken} = useAuth()
 
     const user = useSelector((state) => state.user.value);
     const [editForm, setEditForm] = React.useState({
@@ -16,6 +22,26 @@ const ProfileModel = ({setShowEdit}) => {
     });
     const handleSaveProfile = async (e) => {
         e.preventDefault();
+        try {
+
+            const userData = new FormData();
+            const { full_name, username, bio, location, profile_picture, cover_photo } = editForm;
+            userData.append("full_name", full_name);
+            userData.append("username", username);
+            userData.append("bio", bio);
+            userData.append("location", location);
+            profile_picture && userData.append("profile", profile_picture);
+            cover_photo && userData.append("cover", cover_photo);
+
+
+
+            const token = await getToken()
+            dispatch(updateUser({userData, token}))
+
+            setShowEdit(false)
+        } catch (error) {
+            toast.error(error.message)
+        }
     };
 
   return (
@@ -23,7 +49,7 @@ const ProfileModel = ({setShowEdit}) => {
       <div className="max-w-2xl sm:py-6 mx-auto">
         <div className="bg-white rounded-lg shadow p-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-6"> Edit Profile</h1>
-        <form className="space-y-4" onSubmit={handleSaveProfile}>
+        <form className="space-y-4" onSubmit={e => toast.promise(handleSaveProfile(e), {loading: "Updating Profile..."})}>
             {/* Profile Picture */}
             <div className="flex flex-col items-start gap-3">
                 <label htmlFor ="profile_picture" className="block text-sm font-medium text-gray-700 mb-1">
