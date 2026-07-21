@@ -1,11 +1,32 @@
+// import mongoose from "mongoose";
+
+// const connectionSchema = new mongoose.Schema({
+//     form_user_id: { type: String, required: true, ref:"User" },
+//     to_user_id:{ type: String, required: true, ref:"User" },
+//     status:{ type: String, enum: ["pending", "accepted"], default:"pending" },
+// }, {timestamps: true});
+
+// const Connection = mongoose.model("Connection", connectionSchema);
+
+// export default Connection;
+
 import mongoose from "mongoose";
 
-const connectionSchema = new mongoose.Schema({
-    form_user_id: { type: String, required: true, ref:"User" },
-    to_user_id:{ type: String, required: true, ref:"User" },
-    status:{ type: String, enum: ["pending", "accepted"], default:"pending" },
-}, {timestamps: true});
+const connectionSchema = new mongoose.Schema(
+  {
+    from_user_id: { type: String, required: true, ref: "User" },
+    to_user_id: { type: String, required: true, ref: "User" },
+    status: {
+      type: String,
+      enum: ["pending", "accepted"],
+      default: "pending",
+    },
+  },
+  { timestamps: true }
+);
 
-const Connection = mongoose.model("Connection", connectionSchema);
+const Connection =
+  mongoose.models.Connection ||
+  mongoose.model("Connection", connectionSchema);
 
 export default Connection;

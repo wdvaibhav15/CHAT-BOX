@@ -13,6 +13,7 @@ import Layout from './pages/Layout'
 import { Toaster } from 'react-hot-toast'
 import { useDispatch } from 'react-redux'
 import { fetchUser } from './features/user/userSlice.js'
+import { fetchConnections } from './features/connections/connectionSlice.js'
 
 const App = () => {
   const { user } = useUser();
@@ -58,6 +59,7 @@ const App = () => {
       if (!token) return;
 
       await dispatch(fetchUser(token));
+      await dispatch(fetchConnections(token));
     } catch (error) {
       console.error(error);
     }
