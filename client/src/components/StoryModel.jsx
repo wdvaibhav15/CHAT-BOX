@@ -30,7 +30,7 @@ const StoryModel = ({setShowModel, fetchStories}) => {
     const handleMediaUpload = (e) => {
       const file = e.target.files?.[0];
       if(file){
-        if(file.type.startWith("video")){
+        if(file.type.startsWith("video")){
             if(file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024){
                 toast.error(`Video file size cannot exceed ${MAX_VIDEO_SIZE_MB}MB.`);
                 setMedia(null);
