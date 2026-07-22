@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react' // Fixed: Single clean import for React and useEffect
-import { Routes, Route } from 'react-router-dom'
+import React, { useEffect, useRef } from 'react' // Fixed: Single clean import for React and useEffect
+import { Routes, Route, useLocation } from 'react-router-dom'
 import Feed from './pages/Feed'
 import Messages from './pages/Messages'
 import ChatBox from './pages/ChatBox'
@@ -10,44 +10,22 @@ import CreatePost from './pages/CreatePost'
 import Login from './pages/Login'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import Layout from './pages/Layout' 
-import { Toaster } from 'react-hot-toast'
+import toast, { Toaster } from 'react-hot-toast'
 import { useDispatch } from 'react-redux'
 import { fetchUser } from './features/user/userSlice.js'
 import { fetchConnections } from './features/connections/connectionSlice.js'
+import { addMessage } from './features/messages/messagesSlice.js'
+import Notification from './components/Notification.jsx'
 
 const App = () => {
   const { user } = useUser();
   const { getToken } = useAuth();
+  const { pathname } = useLocation();
+  const pathnameRef = useRef(pathname);
 
   const dispatch = useDispatch();
 
-  // useEffect(() => {
 
-  //   const fetchToken = async () => {
-  //     try {
-  //       const token = await getToken();
-  //       console.log("Your Auth Token:", token);
-  //       // TODO: You can store this in a global state, context, or configure your Axios headers here
-  //     } catch (error) {
-  //       console.error("Error retrieving token:", error);
-  //     }
-  //   };
-
-  //   if (user) {
-  //     fetchToken();
-  //   }
-  // }, [user, getToken]); // Fixed: Added missing hook dependencies
-
-  // useEffect(() => {
-  //   const fetchData = async () =>{
-  //     if(user){
-  //       const token = await getToken();
-  //       dispatch(fetchUser(token))
-  //     }
-  //   }
-  //   fetchData();
-    
-  // },[user, getToken, dispatch ])
 
   useEffect(() => {
   const fetchData = async () => {
@@ -67,6 +45,28 @@ const App = () => {
 
   fetchData();
 }, [user, getToken, dispatch]);
+
+  useEffect(() => {
+    pathnameRef.current = pathname
+  }),[pathname]
+
+  useEffect(() => {
+    if(user){
+      const eventSource = new EventSource(import.meta.env.VITE_BASEURL + '/api/message/' + user.id);
+
+      eventSource.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if (pathnameRef.current === '/messages/' + message.from_user_id._id) {
+          dispatch(addMessage(message));
+        }else{
+          toast.custom((t)=>(
+            <Notification t={t} message={message} />
+          ), {position: 'bottom-right', duration: 5000})
+        }
+      }
+      return () => eventSource.close()
+    }
+  },[user, dispatch])
 
   return (
     <>
