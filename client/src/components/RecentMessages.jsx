@@ -29,7 +29,8 @@ const RecentMessages = () => {
                     return acc;
                 }, {})
                 // sort messages by date
-                const sortedMessages = Object.values(groupedMessages).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                const sortedMessages = Object.values(groupedMessages).
+                sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 setMessages(sortedMessages);
             }else{
                 toast.error(data.message);
