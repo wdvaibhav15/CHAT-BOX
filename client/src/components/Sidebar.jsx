@@ -16,12 +16,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       className={`fixed w-60 xl:w-72 bg-white border-r border-gray-200 flex flex-col justify-between items-center max-sm:absolute top-0 bottom-0 z-20 ${sidebarOpen ? "translate-x-0" : "max-sm:-translate-x-full"} transition-all duration-300 ease-in-out`}
     >
       <div className="w-full ">
-        <img
-          onClick={() => navigate("/")}
-          src={assets.logo}
-          alt="logo"
-          className="w-26 ml-7 my-2 cursor-pointer"
-        />
+        <h1 className="text-sm md:text-3xl ml-6 font-bold">Chat<span className="text-indigo-600">-Box</span></h1>
 
         <hr className="border-gray-300 mb-8" />
 
